@@ -1,581 +1,500 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>ElectroLab - 大学物理电磁场小游戏平台</title>
+<meta charset="UTF-8">
+<title>愤怒的电磁小鸟（稳定版）</title>
 
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:"Segoe UI",sans-serif;
-}
-
 body{
-    background:#050816;
-    overflow:hidden;
+    margin:0;
+    display:flex;
+    font-family:Arial;
+    background:#0b1020;
     color:white;
 }
 
+/* 控制面板 */
+#panel{
+    width:340px;
+    padding:12px;
+    background:#0f172a;
+}
+
 canvas{
-    display:block;
+    background:#020617;
 }
 
-#bgCanvas{
+input{ width:100%; }
+
+button{
+    width:100%;
+    margin-top:8px;
+    padding:8px;
+}
+
+#nextBtn{
+    background:#22c55e;
+    display:none;
+}
+
+/* 开始界面 */
+#startScreen{
     position:fixed;
-    left:0;
     top:0;
-    z-index:0;
-}
-
-#ui{
-    position:relative;
-    z-index:10;
-    width:100vw;
-    height:100vh;
-}
-
-.screen{
+    left:0;
     width:100%;
     height:100%;
+    background:linear-gradient(#1e1b4b,#0b1020);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+}
+
+/* 规则界面 */
+#ruleScreen{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.85);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:1000;
+}
+
+#ruleBox{
+    width:420px;
+    background:#0f172a;
+    padding:20px;
+    border-radius:12px;
+    line-height:1.6;
+}
+
+/* 通关 */
+#win{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.85);
     display:none;
     justify-content:center;
     align-items:center;
     flex-direction:column;
+    font-size:32px;
 }
-
-.active{
-    display:flex;
-}
-
-.title{
-    font-size:56px;
-    color:#00e5ff;
-    text-shadow:0 0 20px #00e5ff;
-    margin-bottom:15px;
-}
-
-.subtitle{
-    color:#9bdcff;
-    margin-bottom:40px;
-}
-
-.menu{
-    display:grid;
-    grid-template-columns:repeat(2,280px);
-    gap:20px;
-}
-
-.btn{
-    background:rgba(0,255,255,0.08);
-    border:1px solid #00ffff;
-    color:#00ffff;
-    padding:20px;
-    font-size:20px;
-    border-radius:14px;
-    cursor:pointer;
-    transition:0.3s;
-    text-align:center;
-    box-shadow:0 0 15px rgba(0,255,255,0.2);
-}
-
-.btn:hover{
-    transform:translateY(-5px) scale(1.03);
-    background:rgba(0,255,255,0.15);
-    box-shadow:0 0 25px #00ffff;
-}
-
-.backBtn{
-    position:absolute;
-    top:20px;
-    left:20px;
-    padding:12px 22px;
-    border:none;
-    border-radius:10px;
-    background:#00d9ff;
-    color:black;
-    cursor:pointer;
-    font-weight:bold;
-}
-
-.gameTitle{
-    font-size:40px;
-    color:#00ffff;
-    margin-bottom:15px;
-}
-
-.info{
-    color:#8cdcff;
-    margin-bottom:20px;
-}
-
-.gameCanvas{
-    border:2px solid #00ffff;
-    background:#07111f;
-    box-shadow:0 0 30px rgba(0,255,255,0.3);
-    border-radius:10px;
-}
-
-.controls{
-    margin-top:20px;
-    display:flex;
-    gap:15px;
-}
-
-.controlBtn{
-    padding:12px 20px;
-    background:#00d9ff;
-    border:none;
-    border-radius:10px;
-    cursor:pointer;
-    font-weight:bold;
-}
-
-.hud{
-    position:absolute;
-    right:20px;
-    top:20px;
-    color:#00ffff;
-    font-size:18px;
-}
-
 </style>
 </head>
 
 <body>
 
-<canvas id="bgCanvas"></canvas>
+<!-- 开始 -->
+<div id="startScreen">
+    <h1>🐦 愤怒的电磁小鸟</h1>
+    <button onclick="startGame()">开始游戏</button>
+</div>
 
-<div id="ui">
+<!-- 规则 -->
+<div id="ruleScreen">
+    <div id="ruleBox">
+        <h2>📘 游戏规则</h2>
 
-    <!-- 首页 -->
-    <div id="home" class="screen active">
+        <p>🎯 目标：用电磁力控制小鸟击中猪头</p>
 
-        <div class="title">ElectroLab</div>
-        <div class="subtitle">大学物理 · 电磁场小游戏平台</div>
+        <p>⚡ 参数：</p>
+        <ul>
+            <li>q：电荷</li>
+            <li>E：电场强度</li>
+            <li>B：磁场强度</li>
+            <li>vx / vy：初速度</li>
+        </ul>
 
-        <div class="menu">
+        <p>🧱 规则：</p>
+        <ul>
+            <li>撞墙会反弹</li>
+            <li>必须绕过障碍</li>
+            <li>击中猪头通关</li>
+        </ul>
 
-            <div class="btn" onclick="openGame('electron')">
-                ⚡ 电子风暴
-            </div>
-
-            <div class="btn" onclick="openGame('magnetic')">
-                🧲 磁场迷宫
-            </div>
-
-            <div class="btn" onclick="openGame('faraday')">
-                🔋 法拉第实验室
-            </div>
-
-            <div class="btn" onclick="openGame('accelerator')">
-                ☢ 粒子加速器
-            </div>
-
-            <div class="btn" onclick="openGame('railgun')">
-                🚀 电磁炮
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- 游戏界面 -->
-    <div id="gameScreen" class="screen">
-
-        <button class="backBtn" onclick="goHome()">
-            ← 返回主页
+        <button onclick="closeRule()" style="
+        width:100%;
+        padding:10px;
+        margin-top:10px;
+        background:#22c55e;
+        border:none;
+        color:white;
+        ">
+        进入游戏
         </button>
-
-        <div class="gameTitle" id="gameTitle"></div>
-
-        <div class="info" id="gameInfo"></div>
-
-        <canvas id="gameCanvas" class="gameCanvas" width="900" height="500"></canvas>
-
-        <div class="controls">
-            <button class="controlBtn" onclick="resetGame()">重新开始</button>
-        </div>
-
-        <div class="hud" id="hud"></div>
-
     </div>
+</div>
 
+<!-- UI -->
+<div id="panel">
+<h2>⚡ 电磁控制</h2>
+
+<button onclick="showRule()">📘 查看规则</button>
+
+<label>q</label><input id="q" type="range" min="-2" max="2" step="0.1" value="1">
+<label>E</label><input id="E" type="range" min="-2" max="2" step="0.1" value="1">
+<label>B</label><input id="B" type="range" min="-2" max="2" step="0.1" value="1">
+<label>vx</label><input id="vx" type="range" min="-8" max="8" step="0.1" value="4">
+<label>vy</label><input id="vy" type="range" min="-8" max="8" step="0.1" value="-2">
+
+<button onclick="launch()">▶ 发射</button>
+<button onclick="resetLevel()">🔄 重置</button>
+<button id="nextBtn" onclick="nextLevel()">➡ 下一关</button>
+</div>
+
+<canvas id="c"></canvas>
+
+<!-- 通关 -->
+<div id="win">
+🎉 通关成功
+<button onclick="restartGame()">重新开始</button>
 </div>
 
 <script>
+const c=document.getElementById("c");
+const ctx=c.getContext("2d");
 
-/* ================= 背景粒子 ================= */
+c.width=window.innerWidth-340;
+c.height=window.innerHeight;
 
-const bgCanvas = document.getElementById("bgCanvas");
-const bgCtx = bgCanvas.getContext("2d");
+let level=1;
+let running=false;
+let gameStarted=false;
 
-function resize(){
-    bgCanvas.width = window.innerWidth;
-    bgCanvas.height = window.innerHeight;
-}
-resize();
+/* ================= 状态 ================= */
+let bird={
+    x:100,
+    y:0,
+    vx:0,
+    vy:0,
+    trail:[]
+};
 
-window.addEventListener("resize",resize);
+let pig={x:0,y:0,r:22};
+let gates=[];
+const dt=0.08;
 
-let particles=[];
-
-for(let i=0;i<120;i++){
-    particles.push({
-        x:Math.random()*window.innerWidth,
-        y:Math.random()*window.innerHeight,
-        r:Math.random()*2,
-        dx:(Math.random()-0.5)*0.5,
-        dy:(Math.random()-0.5)*0.5
-    });
-}
-
-function animateBG(){
-
-    bgCtx.fillStyle="#050816";
-    bgCtx.fillRect(0,0,bgCanvas.width,bgCanvas.height);
-
-    particles.forEach(p=>{
-
-        p.x+=p.dx;
-        p.y+=p.dy;
-
-        if(p.x<0||p.x>bgCanvas.width) p.dx*=-1;
-        if(p.y<0||p.y>bgCanvas.height) p.dy*=-1;
-
-        bgCtx.beginPath();
-        bgCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        bgCtx.fillStyle="#00ffff";
-        bgCtx.fill();
-
-    });
-
-    requestAnimationFrame(animateBG);
+/* ================= 电磁力 ================= */
+function F(q,E,B,vx,vy){
+    return {
+        fx:q*(E + vy*B),
+        fy:q*(0 - vx*B)
+    };
 }
 
-animateBG();
-
-/* ================= 页面逻辑 ================= */
-
-const home=document.getElementById("home");
-const gameScreen=document.getElementById("gameScreen");
-const gameTitle=document.getElementById("gameTitle");
-const gameInfo=document.getElementById("gameInfo");
-const hud=document.getElementById("hud");
-
-const canvas=document.getElementById("gameCanvas");
-const ctx=canvas.getContext("2d");
-
-let currentGame="";
-
-function openGame(name){
-
-    currentGame=name;
-
-    home.classList.remove("active");
-    gameScreen.classList.add("active");
-
-    if(name==="electron"){
-        gameTitle.innerText="⚡ 电子风暴";
-        gameInfo.innerText="控制电子在电磁场中运动";
-        initElectronStorm();
-    }
-
-    if(name==="magnetic"){
-        gameTitle.innerText="🧲 磁场迷宫";
-        gameInfo.innerText="利用磁极控制小球";
-        initMagneticMaze();
-    }
-
-    if(name==="faraday"){
-        gameTitle.innerText="🔋 法拉第实验室";
-        gameInfo.innerText="移动磁铁产生感应电流";
-        initFaraday();
-    }
-
-    if(name==="accelerator"){
-        gameTitle.innerText="☢ 粒子加速器";
-        gameInfo.innerText="让粒子不断加速";
-        initAccelerator();
-    }
-
-    if(name==="railgun"){
-        gameTitle.innerText="🚀 电磁炮";
-        gameInfo.innerText="调节能量发射炮弹";
-        initRailgun();
-    }
+function clamp(v){
+    return Math.max(-10,Math.min(10,v));
 }
 
-function goHome(){
-    gameScreen.classList.remove("active");
-    home.classList.add("active");
+/* ================= 规则系统 ================= */
+function startGame(){
+    document.getElementById("startScreen").style.display="none";
+    showRule();
+    gameStarted=true;
 }
 
-function resetGame(){
-    openGame(currentGame);
+function showRule(){
+    document.getElementById("ruleScreen").style.display="flex";
 }
 
-/* ================= 1 电子风暴 ================= */
+function closeRule(){
+    document.getElementById("ruleScreen").style.display="none";
+}
 
-function initElectronStorm(){
+/* ================= 关卡 ================= */
+function buildLevel(){
 
-    let electron={
-        x:100,
-        y:250,
-        vx:2,
-        vy:0
+    gates=[];
+    let W=c.width;
+    let H=c.height;
+    let mid=H/2;
+
+    let startY=mid+(level-3)*50;
+
+    pig={
+        x:W-140,
+        y:mid+(level%2===0?-1:1)*(60+level*8),
+        r:22
     };
 
-    window.onkeydown=(e)=>{
+    let Sx=100;
+    let Sy=startY;
 
-        if(e.key==="ArrowUp") electron.vy-=0.5;
-        if(e.key==="ArrowDown") electron.vy+=0.5;
+    let dx=pig.x-Sx;
+    let dy=pig.y-Sy;
 
-    };
+    for(let i=1;i<=3;i++){
 
-    function loop(){
+        let t=i/4;
+        let x=Sx+dx*t;
+        let y=Sy+dy*t;
 
-        if(currentGame!=="electron") return;
+        let gap=150-level*12;
+        let jitter=Math.sin(i*2+level)*18;
 
-        ctx.fillStyle="#07111f";
-        ctx.fillRect(0,0,900,500);
-
-        electron.x+=electron.vx;
-        electron.y+=electron.vy;
-
-        electron.vy+=0.02;
-
-        if(electron.y>500) electron.y=0;
-
-        ctx.beginPath();
-        ctx.arc(electron.x,electron.y,10,0,Math.PI*2);
-        ctx.fillStyle="#00ffff";
-        ctx.fill();
-
-        ctx.shadowBlur=20;
-        ctx.shadowColor="#00ffff";
-
-        hud.innerHTML=`
-        vx: ${electron.vx.toFixed(2)}<br>
-        vy: ${electron.vy.toFixed(2)}
-        `;
-
-        requestAnimationFrame(loop);
+        gates.push({
+            x:x,
+            top:y-gap+jitter,
+            bottom:y+gap+jitter
+        });
     }
-
-    loop();
 }
 
-/* ================= 2 磁场迷宫 ================= */
-
-function initMagneticMaze(){
-
-    let ball={
-        x:450,
-        y:250
-    };
-
-    window.onmousemove=(e)=>{
-
-        const rect=canvas.getBoundingClientRect();
-
-        let mx=e.clientX-rect.left;
-        let my=e.clientY-rect.top;
-
-        ball.x+=(mx-ball.x)*0.02;
-        ball.y+=(my-ball.y)*0.02;
-    };
-
-    function loop(){
-
-        if(currentGame!=="magnetic") return;
-
-        ctx.fillStyle="#07111f";
-        ctx.fillRect(0,0,900,500);
-
-        ctx.beginPath();
-        ctx.arc(ball.x,ball.y,20,0,Math.PI*2);
-        ctx.fillStyle="red";
-        ctx.fill();
-
-        hud.innerHTML="移动鼠标控制磁力";
-
-        requestAnimationFrame(loop);
-    }
-
-    loop();
-}
-
-/* ================= 3 法拉第 ================= */
-
-function initFaraday(){
-
-    let energy=0;
-
-    window.onmousemove=(e)=>{
-        energy+=0.5;
-    };
-
-    function loop(){
-
-        if(currentGame!=="faraday") return;
-
-        ctx.fillStyle="#07111f";
-        ctx.fillRect(0,0,900,500);
-
-        ctx.strokeStyle="#00ffff";
-        ctx.lineWidth=5;
-
-        for(let i=0;i<8;i++){
-
-            ctx.beginPath();
-
-            ctx.arc(
-                450,
-                250,
-                30+i*15,
-                0,
-                Math.PI*2
-            );
-
-            ctx.stroke();
+/* ================= 碰撞 ================= */
+function hitGate(x,y){
+    for(let g of gates){
+        if(Math.abs(x-g.x)<18){
+            if(y<g.top || y>g.bottom) return true;
         }
-
-        ctx.fillStyle="yellow";
-        ctx.beginPath();
-        ctx.arc(700,250,energy/10,0,Math.PI*2);
-        ctx.fill();
-
-        if(energy>100) energy=100;
-
-        hud.innerHTML=`感应能量: ${energy.toFixed(0)}%`;
-
-        requestAnimationFrame(loop);
     }
-
-    loop();
+    return false;
 }
 
-/* ================= 4 粒子加速器 ================= */
-
-function initAccelerator(){
-
-    let angle=0;
-    let speed=1;
-
-    window.onkeydown=(e)=>{
-        if(e.key===" ") speed+=0.3;
-    };
-
-    function loop(){
-
-        if(currentGame!=="accelerator") return;
-
-        ctx.fillStyle="#07111f";
-        ctx.fillRect(0,0,900,500);
-
-        ctx.beginPath();
-        ctx.arc(450,250,150,0,Math.PI*2);
-        ctx.strokeStyle="#00ffff";
-        ctx.lineWidth=4;
-        ctx.stroke();
-
-        angle+=0.02*speed;
-
-        let x=450+Math.cos(angle)*150;
-        let y=250+Math.sin(angle)*150;
-
-        ctx.beginPath();
-        ctx.arc(x,y,10,0,Math.PI*2);
-        ctx.fillStyle="#00ffff";
-        ctx.fill();
-
-        hud.innerHTML=`
-        速度等级: ${speed.toFixed(1)}<br>
-        按空格加速
-        `;
-
-        requestAnimationFrame(loop);
-    }
-
-    loop();
+function hitPig(x,y){
+    return Math.hypot(x-pig.x,y-pig.y)<pig.r;
 }
 
-/* ================= 5 电磁炮 ================= */
+/* ================= 预测 ================= */
+function preview(){
 
-function initRailgun(){
+    let q=+qInput.value;
+    let E=+EInput.value;
+    let B=+BInput.value;
 
-    let power=0;
+    let x=100;
+    let y=c.height/2+(level-3)*50;
+    let vx=+vxInput.value;
+    let vy=+vyInput.value;
 
-    window.onkeydown=(e)=>{
+    ctx.beginPath();
+    ctx.setLineDash([3,4]);
+    ctx.moveTo(x,y);
 
-        if(e.key===" "){
-            power+=5;
-        }
+    for(let i=0;i<55;i++){
 
-        if(e.key==="Enter"){
-            fire();
-        }
-    };
+        let f=F(q,E,B,vx,vy);
 
-    function fire(){
+        vx=clamp(vx+f.fx*dt);
+        vy=clamp(vy+f.fy*dt);
 
-        let x=100;
+        x+=vx;
+        y+=vy;
 
-        function shot(){
+        if(hitGate(x,y)) break;
 
-            if(currentGame!=="railgun") return;
-
-            ctx.fillStyle="#07111f";
-            ctx.fillRect(0,0,900,500);
-
-            x+=power*0.5;
-
-            ctx.fillStyle="#00ffff";
-            ctx.fillRect(x,240,40,20);
-
-            ctx.fillStyle="orange";
-            ctx.fillRect(750,200,40,100);
-
-            hud.innerHTML=`
-            能量: ${power}<br>
-            空格充能 ENTER发射
-            `;
-
-            if(x<900){
-                requestAnimationFrame(shot);
-            }
-        }
-
-        shot();
+        ctx.lineTo(x,y);
     }
 
-    function loop(){
-
-        if(currentGame!=="railgun") return;
-
-        ctx.fillStyle="#07111f";
-        ctx.fillRect(0,0,900,500);
-
-        ctx.fillStyle="#00ffff";
-        ctx.fillRect(50,230,100,40);
-
-        ctx.fillStyle="gray";
-        ctx.fillRect(50,245,200,10);
-
-        hud.innerHTML=`
-        能量: ${power}<br>
-        空格充能 ENTER发射
-        `;
-
-        requestAnimationFrame(loop);
-    }
-
-    loop();
+    ctx.strokeStyle="rgba(56,189,248,0.6)";
+    ctx.stroke();
+    ctx.setLineDash([]);
 }
 
+/* ================= 更新 ================= */
+function update(){
+
+    if(!running || !gameStarted) return;
+
+    let q=+qInput.value;
+    let E=+EInput.value;
+    let B=+BInput.value;
+
+    let f=F(q,E,B,bird.vx,bird.vy);
+
+    bird.vx=clamp(bird.vx+f.fx*dt);
+    bird.vy=clamp(bird.vy+f.fy*dt);
+
+    let px=bird.x,py=bird.y;
+
+    bird.x+=bird.vx;
+    bird.y+=bird.vy;
+
+    if(hitGate(bird.x,bird.y)){
+        bird.x=px;
+        bird.y=py;
+        bird.vx*=-0.6;
+        bird.vy*=-0.6;
+    }
+
+    bird.trail.push({x:bird.x,y:bird.y});
+    if(bird.trail.length>120)bird.trail.shift();
+
+    if(hitPig(bird.x,bird.y)){
+        running=false;
+        document.getElementById("nextBtn").style.display="block";
+    }
+}
+
+/* ================= 高级小鸟（稳定版） ================= */
+function drawBird(x,y){
+
+    // 身体
+    ctx.fillStyle="#ff3b30";
+    ctx.beginPath();
+    ctx.arc(x,y,10,0,Math.PI*2);
+    ctx.fill();
+
+    // 白肚子
+    ctx.fillStyle="white";
+    ctx.beginPath();
+    ctx.arc(x+2,y+3,5,0,Math.PI*2);
+    ctx.fill();
+
+    // 眼睛
+    ctx.fillStyle="white";
+    ctx.beginPath();
+    ctx.arc(x+3,y-2,3,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle="black";
+    ctx.beginPath();
+    ctx.arc(x+4,y-2,1.5,0,Math.PI*2);
+    ctx.fill();
+
+    // 眉毛
+    ctx.strokeStyle="black";
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(x+1,y-6);
+    ctx.lineTo(x+6,y-5);
+    ctx.stroke();
+
+    // 嘴
+    ctx.fillStyle="#ffcc00";
+    ctx.beginPath();
+    ctx.moveTo(x+8,y);
+    ctx.lineTo(x+14,y+2);
+    ctx.lineTo(x+8,y+6);
+    ctx.fill();
+}
+
+/* ================= 高级猪头 ================= */
+function drawPig(x,y){
+
+    ctx.fillStyle="#22c55e";
+    ctx.beginPath();
+    ctx.arc(x,y,22,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle="#16a34a";
+    ctx.beginPath();
+    ctx.ellipse(x,y+3,8,5,0,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle="black";
+    ctx.beginPath();
+    ctx.arc(x-3,y+3,1.5,0,Math.PI*2);
+    ctx.arc(x+3,y+3,1.5,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle="white";
+    ctx.beginPath();
+    ctx.arc(x-6,y-6,3,0,Math.PI*2);
+    ctx.arc(x+6,y-6,3,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle="black";
+    ctx.beginPath();
+    ctx.arc(x-6,y-6,1.5,0,Math.PI*2);
+    ctx.arc(x+6,y-6,1.5,0,Math.PI*2);
+    ctx.fill();
+}
+
+/* ================= 绘制 ================= */
+function draw(){
+
+    ctx.clearRect(0,0,c.width,c.height);
+
+    ctx.fillStyle="#334155";
+    for(let g of gates){
+        ctx.fillRect(g.x-10,0,20,g.top);
+        ctx.fillRect(g.x-10,g.bottom,20,c.height);
+    }
+
+    drawPig(pig.x,pig.y);
+    preview();
+
+    ctx.beginPath();
+    for(let i=0;i<bird.trail.length;i++){
+        ctx.lineTo(bird.trail[i].x,bird.trail[i].y);
+    }
+    ctx.strokeStyle="#fbbf24";
+    ctx.stroke();
+
+    drawBird(bird.x,bird.y);
+
+    ctx.fillStyle="white";
+    ctx.fillText("LEVEL "+level,20,20);
+}
+
+/* ================= loop ================= */
+function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+/* ================= 控制 ================= */
+function launch(){
+    buildLevel();
+    resetBird();
+    running=true;
+}
+
+function resetLevel(){
+    buildLevel();
+    resetBird();
+}
+
+function nextLevel(){
+    level++;
+    if(level>5){
+        document.getElementById("win").style.display="flex";
+        return;
+    }
+    buildLevel();
+    resetBird();
+}
+
+/* ================= 重置 ================= */
+function resetBird(){
+    bird.x=100;
+    bird.y=c.height/2+(level-3)*50;
+    bird.vx=+vxInput.value;
+    bird.vy=+vyInput.value;
+    bird.trail=[];
+    running=false;
+    document.getElementById("nextBtn").style.display="none";
+}
+
+/* ================= restart ================= */
+function restartGame(){
+    level=1;
+    document.getElementById("win").style.display="none";
+    buildLevel();
+    resetBird();
+}
+
+/* ================= UI ================= */
+const qInput=document.getElementById("q");
+const EInput=document.getElementById("E");
+const BInput=document.getElementById("B");
+const vxInput=document.getElementById("vx");
+const vyInput=document.getElementById("vy");
+
+/* init */
+buildLevel();
+resetBird();
+loop();
 </script>
 
 </body>
