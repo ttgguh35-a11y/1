@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Physics Mini Game</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #111; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let ball = {
+  x: canvas.width / 2,
+  y: 100,
+  radius: 20,
+  vx: 3,
+  vy: 0,
+  gravity: 0.5,
+  bounce: 0.7
+};
+
+function update() {
+  ball.vy += ball.gravity;
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  // Ground collision
+  if (ball.y + ball.radius > canvas.height) {
+    ball.y = canvas.height - ball.radius;
+    ball.vy *= -ball.bounce;
+  }
+
+  // Wall collision
+  if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+    ball.vx *= -1;
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+  ctx.fillStyle = 'cyan';
+  ctx.fill();
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+
+// Click to add impulse
+canvas.addEventListener('click', (e) => {
+  ball.vy = -10;
+  ball.vx += (Math.random() - 0.5) * 5;
+});
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+</script>
+</body>
+</html>
